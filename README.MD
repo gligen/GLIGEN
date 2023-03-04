@@ -18,11 +18,13 @@ We provide [dockerfile](env_docker/Dockerfile) to setup environment.
 ## Download GLIGEN models
 
 We provide five checkpoints for different use scenarios. All models here are based on SD-V-1.4.
-- 1) [text grounding for generation](https://drive.google.com/file/d/1NaKGexqhKOrqXaRYWOGWlWpSDl0YnmhJ/view?usp=share_link)
-- 2) [text and image grounding for generation](https://drive.google.com/file/d/1CIOdrB8o64w1phUg04JT4AwSIw2dyX13/view?usp=share_link) 
-- 3) [keypoint grounding for generation](https://drive.google.com/file/d/1tz2zMRRGnc4uRVHmvzsoe34VDPOsFwao/view?usp=share_link) 
-- 4) [text grounding for inpainting](https://drive.google.com/file/d/1vX4mi4nPLzCNd6-pRjDxkniV0apj-7QO/view?usp=share_link) 
-- 5) [text and image grounding for inpainting](https://drive.google.com/file/d/1UTvRFoMyLHCPUvHHLDuwrdlafPaDuxEw/view?usp=share_link) 
+| Mode       | Modality       | Download                                                                                                       |
+|------------|----------------|----------------------------------------------------------------------------------------------------------------|
+| Generation | Box+Text       | [HF Hub](https://huggingface.co/gligen/gligen-generation-text-box/blob/main/diffusion_pytorch_model.bin)       |
+| Generation | Box+Text+Image | [HF Hub](https://huggingface.co/gligen/gligen-generation-text-image-box/blob/main/diffusion_pytorch_model.bin) |
+| Generation | Keypoint       | [HF Hub](https://huggingface.co/gligen/gligen-generation-keypoint/blob/main/diffusion_pytorch_model.bin)       |
+| Inpainting | Box+Text       | [HF Hub](https://huggingface.co/gligen/gligen-inpainting-text-box/blob/main/diffusion_pytorch_model.bin)       |
+| Inpainting | Box+Text+Image | [HF Hub](https://huggingface.co/gligen/gligen-inpainting-text-image-box/blob/main/diffusion_pytorch_model.bin) |
 
 ## Inference: Generate images with GLIGEN
 
