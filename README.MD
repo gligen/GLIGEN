@@ -18,11 +18,11 @@ We provide [dockerfile](env_docker/Dockerfile) to setup environment.
 ## Download GLIGEN models
 
 We provide five checkpoints for different use scenarios. All models here are based on SD-V-1.4.
-- 1) [text grounding for generation](https://huggingface.co/gligen/sd-gligen-base/blob/main/diffusion_pytorch_model.bin)
-- 2) [text and image grounding for generation](https://huggingface.co/gligen/sd-gligen-image/blob/main/diffusion_pytorch_model.bin) 
-- 3) [keypoint grounding for generation](https://huggingface.co/gligen/sd-gligen-keypoint/blob/main/diffusion_pytorch_model.bin) 
-- 4) [text grounding for inpainting](https://huggingface.co/gligen/sd-gligen-keypoint/blob/main/diffusion_pytorch_model.bin) 
-- 5) [text and image grounding for inpainting](https://huggingface.co/gligen/sd-gligen-inpaint-image/blob/main/diffusion_pytorch_model.bin) 
+- 1) [text grounding for generation](https://drive.google.com/file/d/1NaKGexqhKOrqXaRYWOGWlWpSDl0YnmhJ/view?usp=share_link)
+- 2) [text and image grounding for generation](https://drive.google.com/file/d/1CIOdrB8o64w1phUg04JT4AwSIw2dyX13/view?usp=share_link) 
+- 3) [keypoint grounding for generation](https://drive.google.com/file/d/1tz2zMRRGnc4uRVHmvzsoe34VDPOsFwao/view?usp=share_link) 
+- 4) [text grounding for inpainting](https://drive.google.com/file/d/1vX4mi4nPLzCNd6-pRjDxkniV0apj-7QO/view?usp=share_link) 
+- 5) [text and image grounding for inpainting](https://drive.google.com/file/d/1UTvRFoMyLHCPUvHHLDuwrdlafPaDuxEw/view?usp=share_link) 
 
 ## Inference: Generate images with GLIGEN
 
