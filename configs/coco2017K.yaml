@@ -1,0 +1,69 @@
+diffusion:
+  target: ldm.models.diffusion.ldm.LatentDiffusion
+  params:
+    linear_start: 0.00085
+    linear_end: 0.012
+    timesteps: 1000
+   
+
+model:
+  target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+  params:
+    image_size: 64 # unused in the unet, but will be used when create xT
+    in_channels: 4
+    out_channels: 4
+    model_channels: 320
+    attention_resolutions: [ 4, 2, 1 ]
+    num_res_blocks: 2
+    channel_mult: [ 1, 2, 4, 4 ]
+    num_heads: 8
+    transformer_depth: 1
+    context_dim: 768
+    fuser_type: gatedSA  #  gatedCA or gatedSA
+    use_checkpoint: True
+
+    grounding_tokenizer:
+      target: ldm.modules.diffusionmodules.keypoint_grounding_net.PositionNet
+      params:
+        max_persons_per_image: 8 # must same as the one in dataset   
+        out_dim: 768 # Not constrained to this, as one linear project is appiled at each Gated layer to match visual dimension 
+
+
+autoencoder:
+  target: ldm.models.autoencoder.AutoencoderKL
+  params:
+    scale_factor: 0.18215 
+    embed_dim: 4
+    ddconfig:
+      double_z: true
+      z_channels: 4
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+
+
+text_encoder:
+  target: ldm.modules.encoders.modules.FrozenCLIPEmbedder
+
+
+
+
+train_dataset_names: 
+  COCO2017Keypoint:   
+    image_size: 512
+    prob_real_caption: 1
+    max_persons_per_image: 8   # This must be same as the one in Model
+    random_flip: True
+
+
+grounding_tokenizer_input:
+  target: grounding_input.keypoint_grounding_tokinzer_input.GroundingNetInput
