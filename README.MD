@@ -42,7 +42,7 @@ Example samples for each checkpoint will be saved in `generation_samples`. One c
 One need to first prepare data for different grounding modality conditions. Refer [data](DATA/README.MD) for the data we used for different GLIGEN models. Once data is ready, the following command is used to train GLIGEN. (We support multi-GPUs training)
 
 ```bash
-ptyhon main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config
+python main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config
 ```
 The `--yaml_file` is the most important argument and below we will use one example to explain key components so that one can be familiar with our code and know how to customize training on their own grounding modalities. The other args are self-explanatory by their names. The experiment will be saved in `OUTPUT_ROOT/name`
 
@@ -57,7 +57,7 @@ One can refer `configs/flicker_text.yaml` as one example. One can see that there
 
 GLIGEN also supports inpainting training. The following command can be used:
 ```bash
-ptyhon main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config --inpaint_mode=True  --ckpt=path_to_an_adapted_model
+python main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config --inpaint_mode=True  --ckpt=path_to_an_adapted_model
 ```
 Typecially, we first train GLIGEN on generation task (e.g., text grounded generation) and this model has 4 channels for input conv (latent space of Stable Diffusion), then we modify the saved checkpoint to 9 channels with addition 5 channels initilized with 0. This continue training can lead to faster convergence and better results. path_to_an_adapted_model refers to this modified checkpoint, `convert_ckpt.py` can be used for modifying checkpoint. **NOTE:** yaml file is the same for generation and inpainting training, one only need to change `--inpaint_mode`
 
