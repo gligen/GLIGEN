@@ -11,14 +11,8 @@ pinned: false
 
 # Gradio App Demo for GLIGEN
 
-
-## :fire: News
-
-* **[2023.03.05]** Gradio demo code is released!
-* **[2023.03.03]** Code base and checkpoints are released at [GLIGEN](https://github.com/gligen/GLIGEN).
-
 ## :notes: Introduction
-This repo includes the source code of our [Gradio app demo](https://huggingface.co/spaces/gligen/demo) for GLIGEN.  It automatically downloads and loads our checkpoints hosted on Huggingface.
+This folder includes the source code of our [Gradio app demo](https://huggingface.co/spaces/gligen/demo) for GLIGEN.  It automatically downloads and loads our checkpoints hosted on Huggingface.
 
 NOTE: You may notice slight implementation differences of the pipeline between this code base and main GLIGEN repo, although the functionality and the checkpoints are the same.  We'll replace the implementation pipeline to Diffusers after we finish the integration.
 

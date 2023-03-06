@@ -11,6 +11,13 @@
 - Go beyond text prompt with GLIGEN: enable new capabilities on frozen text-to-image generation models to ground on various prompts, including box, keypoints and images.
 - GLIGEN’s zero-shot performance on COCO and LVIS outperforms that of existing supervised layout-to-image baselines by a large margin.
 
+
+## :fire: News
+
+* **[2023.03.05]** Gradio demo code is released [here](https://github.com/gligen/GLIGEN/tree/master/demo)!
+* **[2023.03.03]** Code base and checkpoints are released at [GLIGEN](https://github.com/gligen/GLIGEN).
+* **[2023.02.28]** Paper is accepted to CVPR 2023!
+
 ## Requirements
 We provide [dockerfile](env_docker/Dockerfile) to setup environment. 
 
