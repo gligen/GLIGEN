@@ -14,7 +14,7 @@
 
 ## :fire: News
 
-* **[2023.03.05]** Gradio demo code is released [here](https://github.com/gligen/GLIGEN/tree/master/demo)!
+* **[2023.03.05]** Gradio demo code is released at [`GLIGEN/demo`](https://github.com/gligen/GLIGEN/tree/master/demo)!
 * **[2023.03.03]** Code base and checkpoints are released!
 * **[2023.02.28]** Paper is accepted to CVPR 2023!
 
