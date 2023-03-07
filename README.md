@@ -14,9 +14,10 @@
 
 ## :fire: News
 
-* **[2023.03.05]** Gradio demo code is released at [`GLIGEN/demo`](https://github.com/gligen/GLIGEN/tree/master/demo)!
-* **[2023.03.03]** Code base and checkpoints are released!
-* **[2023.02.28]** Paper is accepted to CVPR 2023!
+* **[2023.03.05]** Gradio demo code is released at [`GLIGEN/demo`](https://github.com/gligen/GLIGEN/tree/master/demo).
+* **[2023.03.03]** Code base and checkpoints are released.
+* **[2023.02.28]** Paper is accepted to CVPR 2023.
+* **[2023.01.17]** GLIGEN paper and demo is released.
 
 ## Requirements
 We provide [dockerfile](env_docker/Dockerfile) to setup environment. 
