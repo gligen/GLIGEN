@@ -341,7 +341,7 @@ if __name__ == "__main__":
             ckpt = "gligen_checkpoints/checkpoint_generation_text_image.pth",
             prompt = "an alarm clock sitting on the beach",
             images = ['inference_images/clock.png'],
-            phrases = ['alarm clock']
+            phrases = ['alarm clock'],
             locations = [ [0.0,0.09,0.53,0.76] ],
             alpha_type = [1.0, 0.0, 0.0],
             save_folder_name="checkpoint_generation_text_image_test0"
