@@ -8,6 +8,8 @@ import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
 
+device = "cpu"
+
 
 class AbstractEncoder(nn.Module):
     def __init__(self):
@@ -230,5 +232,5 @@ class FrozenClipImageEmbedder(nn.Module):
 
 if __name__ == "__main__":
     from ldm.util import count_params
-    model = FrozenCLIPEmbedder()
+    model = FrozenCLIPEmbedder(device=device)
     count_params(model, verbose=True)

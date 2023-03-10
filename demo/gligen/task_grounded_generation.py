@@ -18,7 +18,7 @@ import torchvision.transforms.functional as F
 import random
 
 
-device = "cuda"
+device = "cpu"
 
 
 def alpha_generator(length, type=[1,0,0]):
@@ -100,21 +100,21 @@ def get_clip_feature(model, processor, input, is_image=False):
     if is_image:
         image = input #Image.open(input).convert("RGB")
         inputs = processor(images=[image],  return_tensors="pt", padding=True)
-        inputs['pixel_values'] = inputs['pixel_values'].cuda() # we use our own preprocessing without center_crop 
-        inputs['input_ids'] = torch.tensor([[0,1,2,3]]).cuda()  # placeholder
+        inputs['pixel_values'] = inputs['pixel_values'].to(device) # we use our own preprocessing without center_crop 
+        inputs['input_ids'] = torch.tensor([[0,1,2,3]]).to(device)  # placeholder
         outputs = model(**inputs)
         feature = outputs.image_embeds 
         if feature_type[1] == 'after_renorm':
             feature = feature*28.7
         if feature_type[1] == 'after_reproject':
-            feature = project( feature, torch.load('gligen/projection_matrix').cuda().T ).squeeze(0)
+            feature = project( feature, torch.load('gligen/projection_matrix').to(device).T ).squeeze(0)
             feature = ( feature / feature.norm() )  * 28.7 
             feature = feature.unsqueeze(0)
     else:
         inputs = processor(text=input,  return_tensors="pt", padding=True)
-        inputs['input_ids'] = inputs['input_ids'].cuda()
-        inputs['pixel_values'] = torch.ones(1,3,224,224).cuda() # placeholder 
-        inputs['attention_mask'] = inputs['attention_mask'].cuda()
+        inputs['input_ids'] = inputs['input_ids'].to(device)
+        inputs['pixel_values'] = torch.ones(1,3,224,224).to(device) # placeholder 
+        inputs['attention_mask'] = inputs['attention_mask'].to(device)
         outputs = model(**inputs)
         feature = outputs.text_embeds if feature_type[0] == 'after' else outputs.text_model_output.pooler_output
     return feature
@@ -139,7 +139,7 @@ def fire_clip(text_encoder, meta, batch=1, max_objs=30, clip_model=None):
 
     if clip_model is None:
         version = "openai/clip-vit-large-patch14"
-        model = CLIPModel.from_pretrained(version).cuda()
+        model = CLIPModel.from_pretrained(version).to(device)
         processor = CLIPProcessor.from_pretrained(version)
     else:
         version = "openai/clip-vit-large-patch14"
@@ -219,14 +219,14 @@ def grounded_generation_box(loaded_model_list, instruction, *args, **kwargs):
     inpainting_mask = x0 = None # used for inpainting
     if is_inpaint:       
         input_image = F.pil_to_tensor(  instruction["input_image"] ) 
-        input_image = ( input_image.float().unsqueeze(0).cuda() / 255 - 0.5 ) / 0.5
+        input_image = ( input_image.float().unsqueeze(0).to(device) / 255 - 0.5 ) / 0.5
         x0 = autoencoder.encode( input_image )
         if instruction["actual_mask"] is not None:
-            inpainting_mask = instruction["actual_mask"][None, None].expand(batch['boxes'].shape[0], -1, -1, -1).cuda()
+            inpainting_mask = instruction["actual_mask"][None, None].expand(batch['boxes'].shape[0], -1, -1, -1).to(device)
         else:
-            # inpainting_mask = draw_masks_from_boxes( batch['boxes'], (x0.shape[-2], x0.shape[-1])  ).cuda()
+            # inpainting_mask = draw_masks_from_boxes( batch['boxes'], (x0.shape[-2], x0.shape[-1])  ).to(device)
             actual_boxes = [instruction['inpainting_boxes_nodrop'] for _ in range(batch['boxes'].shape[0])]
-            inpainting_mask = draw_masks_from_boxes(actual_boxes, (x0.shape[-2], x0.shape[-1])  ).cuda()
+            inpainting_mask = draw_masks_from_boxes(actual_boxes, (x0.shape[-2], x0.shape[-1])  ).to(device)
         # extra input for the model 
         masked_x0 = x0*inpainting_mask
         inpainting_extra_input = torch.cat([masked_x0,inpainting_mask], dim=1)

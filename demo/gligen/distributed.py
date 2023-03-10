@@ -5,6 +5,7 @@ import torch
 from torch import distributed as dist
 from torch.utils.data.sampler import Sampler
 
+device = "cpu"
 
 def get_rank():
     if not dist.is_available():
@@ -70,20 +71,20 @@ def all_gather(data):
 
     buffer = pickle.dumps(data)
     storage = torch.ByteStorage.from_buffer(buffer)
-    tensor = torch.ByteTensor(storage).to('cuda')
+    tensor = torch.ByteTensor(storage).to(device)
 
-    local_size = torch.IntTensor([tensor.numel()]).to('cuda')
-    size_list = [torch.IntTensor([0]).to('cuda') for _ in range(world_size)]
+    local_size = torch.IntTensor([tensor.numel()]).to(device)
+    size_list = [torch.IntTensor([0]).to(device) for _ in range(world_size)]
     dist.all_gather(size_list, local_size)
     size_list = [int(size.item()) for size in size_list]
     max_size = max(size_list)
 
     tensor_list = []
     for _ in size_list:
-        tensor_list.append(torch.ByteTensor(size=(max_size,)).to('cuda'))
+        tensor_list.append(torch.ByteTensor(size=(max_size,)).to(device))
 
     if local_size != max_size:
-        padding = torch.ByteTensor(size=(max_size - local_size,)).to('cuda')
+        padding = torch.ByteTensor(size=(max_size - local_size,)).to(device)
         tensor = torch.cat((tensor, padding), 0)
 
     dist.all_gather(tensor_list, tensor)

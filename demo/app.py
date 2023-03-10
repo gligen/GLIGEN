@@ -18,6 +18,7 @@ hf_hub_download = partial(hf_hub_download, library_name="gligen_demo")
 
 
 arg_bool = lambda x: x.lower() == 'true'
+device = "cpu"
 
 
 def parse_option():
@@ -74,7 +75,7 @@ if args.load_text_image_box_generation:
 def load_clip_model():
     from transformers import CLIPProcessor, CLIPModel
     version = "openai/clip-vit-large-patch14"
-    model = CLIPModel.from_pretrained(version).cuda()
+    model = CLIPModel.from_pretrained(version).to(device)
     processor = CLIPProcessor.from_pretrained(version)
 
     return {
@@ -193,16 +194,17 @@ def inference(task, language_instruction, grounding_instruction, inpainting_boxe
         inpainting_boxes_nodrop = inpainting_boxes_nodrop,
     )
 
-    with torch.autocast(device_type='cuda', dtype=torch.float16):
-        if task == 'Grounded Generation':
-            if style_image == None:
-                return grounded_generation_box(loaded_model_list, instruction, *args, **kwargs)
-            else:
-                return grounded_generation_box(loaded_model_list_style, instruction, *args, **kwargs)
-        elif task == 'Grounded Inpainting':
-            assert image is not None
-            instruction['input_image'] = image.convert("RGB")
-            return grounded_generation_box(loaded_model_list_inpaint, instruction, *args, **kwargs)
+    # no MPS... or CPU
+    # with torch.autocast(device_type=device, dtype=torch.float16):
+    if task == 'Grounded Generation':
+        if style_image == None:
+            return grounded_generation_box(loaded_model_list, instruction, *args, **kwargs)
+        else:
+            return grounded_generation_box(loaded_model_list_style, instruction, *args, **kwargs)
+    elif task == 'Grounded Inpainting':
+        assert image is not None
+        instruction['input_image'] = image.convert("RGB")
+        return grounded_generation_box(loaded_model_list_inpaint, instruction, *args, **kwargs)
 
 
 def draw_box(boxes=[], texts=[], img=None):

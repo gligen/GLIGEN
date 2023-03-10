@@ -15,6 +15,8 @@ from PIL import Image
 import math
 import json
 
+device = "cpu"
+
 
 def draw_masks_from_boxes(boxes,size):
 
@@ -66,7 +68,7 @@ class Evaluator:
     def __init__(self, config):
 
         self.config = config
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
      
 
         # = = = = = create model and diffusion = = = = = #
@@ -169,7 +171,7 @@ class Evaluator:
                 
                     image_mask = x0 = None 
                     if self.config.inpaint:
-                        image_mask = draw_masks_from_boxes( batch['boxes'], self.model.image_size  ).cuda()
+                        image_mask = draw_masks_from_boxes( batch['boxes'], self.model.image_size  ).to(device)
                         x0 = self.autoencoder.encode( batch["image"] )
 
                     shape = (batch_size, self.model.in_channels, self.model.image_size, self.model.image_size)
