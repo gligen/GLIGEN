@@ -8,7 +8,7 @@ import os
 from transformers import CLIPProcessor, CLIPModel
 from copy import deepcopy
 import torch 
-from ldm.util import instantiate_from_config
+from ldm.util import default_device, instantiate_from_config
 from trainer import read_official_ckpt, batch_to_device
 from evaluator import set_alpha_scale, save_images, draw_masks_from_boxes
 import numpy as np
@@ -18,7 +18,7 @@ import torchvision.transforms.functional as F
 import random
 
 
-device = "mps"
+device = default_device()
 
 
 def alpha_generator(length, type=[1,0,0]):

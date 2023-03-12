@@ -1,7 +1,7 @@
 import torch
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
-from ldm.util import instantiate_from_config
+from ldm.util import default_device, instantiate_from_config
 import numpy as np
 import random
 from dataset.concat_dataset import ConCatDataset #, collate_fn
@@ -15,7 +15,7 @@ from PIL import Image
 import math
 import json
 
-device = "mps"
+device = default_device()
 
 
 def draw_masks_from_boxes(boxes,size):

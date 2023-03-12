@@ -5,7 +5,9 @@ import torch
 from torch import distributed as dist
 from torch.utils.data.sampler import Sampler
 
-device = "mps"
+from ldm.util import default_device
+
+device = default_device()
 
 def get_rank():
     if not dist.is_available():

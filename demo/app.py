@@ -3,12 +3,14 @@ import torch
 import argparse
 from omegaconf import OmegaConf
 from gligen.task_grounded_generation import grounded_generation_box, load_ckpt
+from ldm.util import default_device
 
 import json
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from functools import partial
 import math
+from contextlib import nullcontext
 
 from gradio import processing_utils
 from typing import Optional
@@ -16,10 +18,14 @@ from typing import Optional
 from huggingface_hub import hf_hub_download
 hf_hub_download = partial(hf_hub_download, library_name="gligen_demo")
 
-
 arg_bool = lambda x: x.lower() == 'true'
-device = "mps"
+device = default_device()
 
+print(f"GLIGEN uses {device.upper()} device.")
+if device == "cpu":
+    print("It will be sloooow. Consider using GPU support with CUDA or (in case of M1/M2 Apple Silicon) MPS.")
+elif device == "mps":
+    print("The fastest you can get on M1/2 Apple Silicon. Yet, still many opimizations are switched off and it will is much slower than CUDA.")
 
 def parse_option():
     parser = argparse.ArgumentParser('GLIGen Demo', add_help=False)
@@ -194,17 +200,17 @@ def inference(task, language_instruction, grounding_instruction, inpainting_boxe
         inpainting_boxes_nodrop = inpainting_boxes_nodrop,
     )
 
-    # no MPS... or CPU
-    # with torch.autocast(device_type=device, dtype=torch.float16):
-    if task == 'Grounded Generation':
-        if style_image == None:
-            return grounded_generation_box(loaded_model_list, instruction, *args, **kwargs)
-        else:
-            return grounded_generation_box(loaded_model_list_style, instruction, *args, **kwargs)
-    elif task == 'Grounded Inpainting':
-        assert image is not None
-        instruction['input_image'] = image.convert("RGB")
-        return grounded_generation_box(loaded_model_list_inpaint, instruction, *args, **kwargs)
+    # float16 autocasting only CUDA device
+    with torch.autocast(device_type='cuda', dtype=torch.float16) if device == "cuda" else nullcontext():
+        if task == 'Grounded Generation':
+            if style_image == None:
+                return grounded_generation_box(loaded_model_list, instruction, *args, **kwargs)
+            else:
+                return grounded_generation_box(loaded_model_list_style, instruction, *args, **kwargs)
+        elif task == 'Grounded Inpainting':
+            assert image is not None
+            instruction['input_image'] = image.convert("RGB")
+            return grounded_generation_box(loaded_model_list_inpaint, instruction, *args, **kwargs)
 
 
 def draw_box(boxes=[], texts=[], img=None):
