@@ -1,6 +1,5 @@
 name: gligen_demo
 channels:
-  - xformers/label/dev
   - pytorch
   - defaults
 dependencies:
