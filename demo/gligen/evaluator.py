@@ -15,7 +15,7 @@ from PIL import Image
 import math
 import json
 
-device = "cpu"
+device = "mps"
 
 
 def draw_masks_from_boxes(boxes,size):
@@ -68,7 +68,7 @@ class Evaluator:
     def __init__(self, config):
 
         self.config = config
-        self.device = torch.device("cpu")
+        self.device = torch.device(device)
      
 
         # = = = = = create model and diffusion = = = = = #

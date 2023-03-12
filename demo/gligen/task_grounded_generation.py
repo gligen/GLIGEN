@@ -18,7 +18,7 @@ import torchvision.transforms.functional as F
 import random
 
 
-device = "cpu"
+device = "mps"
 
 
 def alpha_generator(length, type=[1,0,0]):

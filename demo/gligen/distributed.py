@@ -5,7 +5,7 @@ import torch
 from torch import distributed as dist
 from torch.utils.data.sampler import Sampler
 
-device = "cpu"
+device = "mps"
 
 def get_rank():
     if not dist.is_available():

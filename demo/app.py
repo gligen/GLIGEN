@@ -18,7 +18,7 @@ hf_hub_download = partial(hf_hub_download, library_name="gligen_demo")
 
 
 arg_bool = lambda x: x.lower() == 'true'
-device = "cpu"
+device = "mps"
 
 
 def parse_option():

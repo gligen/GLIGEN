@@ -5,6 +5,7 @@ from functools import partial
 from copy import deepcopy
 from ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like
 
+device = "mps"
 
 class PLMSSampler(object):
     def __init__(self, diffusion, model, schedule="linear", alpha_generator_func=None, set_alpha_scale=None):
@@ -19,6 +20,8 @@ class PLMSSampler(object):
 
     def register_buffer(self, name, attr):
         if type(attr) == torch.Tensor:
+            if device == "mps":
+                attr = attr.float()
             attr = attr.to(self.device)
         setattr(self, name, attr)
 

@@ -8,7 +8,7 @@ import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
 
-device = "cpu"
+device = "mps"
 
 class AbstractEncoder(nn.Module):
     def __init__(self):
@@ -145,7 +145,7 @@ class SpatialRescaler(nn.Module):
 # not sure if i cannot pass it somewhere else
 class FrozenCLIPEmbedder(AbstractEncoder):
     """Uses the CLIP transformer encoder for text (from Hugging Face)"""
-    def __init__(self, version="openai/clip-vit-large-patch14", device="cpu", max_length=77):
+    def __init__(self, version="openai/clip-vit-large-patch14", device=device, max_length=77):
         super().__init__()
         self.tokenizer = CLIPTokenizer.from_pretrained(version)
         self.transformer = CLIPTextModel.from_pretrained(version)

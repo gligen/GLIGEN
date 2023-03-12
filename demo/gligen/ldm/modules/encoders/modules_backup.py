@@ -8,7 +8,7 @@ import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
 
-device = "cpu"
+device = "mps"
 
 
 class AbstractEncoder(nn.Module):
