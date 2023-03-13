@@ -7,6 +7,9 @@ from transformers import CLIPTokenizer, CLIPTextModel
 import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
+from ldm.util import default_device
+
+device = default_device()
 
 
 class AbstractEncoder(nn.Module):
@@ -230,5 +233,5 @@ class FrozenClipImageEmbedder(nn.Module):
 
 if __name__ == "__main__":
     from ldm.util import count_params
-    model = FrozenCLIPEmbedder()
+    model = FrozenCLIPEmbedder(device=device)
     count_params(model, verbose=True)

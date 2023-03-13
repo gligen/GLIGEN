@@ -7,7 +7,9 @@ from transformers import CLIPTokenizer, CLIPTextModel
 import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
+from ldm.util import default_device
 
+device = default_device()
 
 class AbstractEncoder(nn.Module):
     def __init__(self):
@@ -86,7 +88,7 @@ class BERTEmbedder(AbstractEncoder):
         super().__init__()
         self.use_tknz_fn = use_tokenizer
         if self.use_tknz_fn:
-            self.tknz_fn = BERTTokenizer(vq_interface=False, max_length=max_seq_len)
+            self.tknz_fn = BERTTokenizer(vq_interface=False, max_length=max_seq_len, device=device)
         self.device = device
         self.transformer = TransformerWrapper(num_tokens=vocab_size, max_seq_len=max_seq_len,
                                               attn_layers=Encoder(dim=n_embed, depth=n_layer),
@@ -141,9 +143,10 @@ class SpatialRescaler(nn.Module):
     def encode(self, x):
         return self(x)
 
+# not sure if i cannot pass it somewhere else
 class FrozenCLIPEmbedder(AbstractEncoder):
     """Uses the CLIP transformer encoder for text (from Hugging Face)"""
-    def __init__(self, version="openai/clip-vit-large-patch14", device="cuda", max_length=77):
+    def __init__(self, version="openai/clip-vit-large-patch14", device=device, max_length=77):
         super().__init__()
         self.tokenizer = CLIPTokenizer.from_pretrained(version)
         self.transformer = CLIPTextModel.from_pretrained(version)
@@ -241,5 +244,5 @@ class FrozenClipImageEmbedder(nn.Module):
 
 if __name__ == "__main__":
     from ldm.util import count_params
-    model = FrozenCLIPEmbedder()
-    count_params(model, verbose=True)
+    model = FrozenCLIPEmbedder(device=device)
+    count_params(model, verbose=True, device=device)
