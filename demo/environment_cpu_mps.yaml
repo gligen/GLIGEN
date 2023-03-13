@@ -21,6 +21,6 @@ dependencies:
       - git+https://github.com/openai/CLIP.git
       - protobuf~=3.20.1
       - torchmetrics==0.6.0
-      - transformers==4.19.2
+      - transformers==4.26.1
       - kornia==0.6.0
       - gradio==3.16.0
