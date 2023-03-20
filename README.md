@@ -14,6 +14,7 @@
 
 ## :fire: News
 
+* **[2023.03.20]** Stay up-to-date on the line of research on *grounded image generation* such as GLIGEN, by checking out [`Computer Vision in the Wild (CVinW) Reading List`](https://github.com/Computer-Vision-in-the-Wild/CVinW_Readings#orange_book-grounded-image-generation-in-the-wild).
 * **[2023.03.05]** Gradio demo code is released at [`GLIGEN/demo`](https://github.com/gligen/GLIGEN/tree/master/demo).
 * **[2023.03.03]** Code base and checkpoints are released.
 * **[2023.02.28]** Paper is accepted to CVPR 2023.
