@@ -16,6 +16,7 @@
 
 * **[2023.03.22]** [Our fork on diffusers](https://github.com/gligen/diffusers/tree/gligen/examples/gligen) with support of text-box-conditioned generation and inpainting is released.  It is now faster, more flexible, and automatically downloads and loads model from Huggingface Hub!  Try it out!
 * **[2023.03.20]** Stay up-to-date on the line of research on *grounded image generation* such as GLIGEN, by checking out [`Computer Vision in the Wild (CVinW) Reading List`](https://github.com/Computer-Vision-in-the-Wild/CVinW_Readings#orange_book-grounded-image-generation-in-the-wild).
+* **[2023.03.19]** GLIGEN is covered by great Yannic Kilcher in his latest YouTube video on [`The biggest week in AI`](https://www.youtube.com/watch?v=YqPYDWPYXFs&t=2245s).
 * **[2023.03.05]** Gradio demo code is released at [`GLIGEN/demo`](https://github.com/gligen/GLIGEN/tree/master/demo).
 * **[2023.03.03]** Code base and checkpoints are released.
 * **[2023.02.28]** Paper is accepted to CVPR 2023.
