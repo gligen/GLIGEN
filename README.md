@@ -36,6 +36,11 @@ We provide five checkpoints for different use scenarios. All models here are bas
 | Generation | Keypoint       | [HF Hub](https://huggingface.co/gligen/gligen-generation-keypoint/blob/main/diffusion_pytorch_model.bin)       |
 | Inpainting | Box+Text       | [HF Hub](https://huggingface.co/gligen/gligen-inpainting-text-box/blob/main/diffusion_pytorch_model.bin)       |
 | Inpainting | Box+Text+Image | [HF Hub](https://huggingface.co/gligen/gligen-inpainting-text-image-box/blob/main/diffusion_pytorch_model.bin) |
+| Generation | Hed map        | [HF Hub](https://huggingface.co/gligen/gligen-generation-hed/blob/main/diffusion_pytorch_model.bin)      |
+| Generation | Canny map      | [HF Hub](https://huggingface.co/gligen/gligen-generation-canny/blob/main/diffusion_pytorch_model.bin)      |
+| Generation | Depth map      | [HF Hub](https://huggingface.co/gligen/gligen-generation-depth/blob/main/diffusion_pytorch_model.bin)      |
+| Generation | Semantic map   | [HF Hub](https://huggingface.co/gligen/gligen-generation-sem/blob/main/diffusion_pytorch_model.bin)      |
+| Generation | Normal map     | [HF Hub](https://huggingface.co/gligen/gligen-generation-normal/blob/main/diffusion_pytorch_model.bin)      |
 
 ## Inference: Generate images with GLIGEN
 
