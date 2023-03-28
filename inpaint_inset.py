@@ -305,7 +305,11 @@ if __name__ == "__main__":
     parser.add_argument("--prompt", type=str, help="Prompt.")
     parser.add_argument("--bg", type=str, help="Background image.")
     parser.add_argument("--inset", type=str, help="Inset image.")
-    parser.add_argument("--batch_size", type=int, default=5, help="This will overwrite the one in yaml.")
+    parser.add_argument("--batch_size", type=int, default=1, help="This will overwrite the one in yaml.")
+    parser.add_argument("--x0", type=float,  default=0.3, help="Bouding box position - left, range: 0.0-1.0")
+    parser.add_argument("--x1", type=float,  default=0.6, help="Bouding box position - right, range: 0.0-1.0")
+    parser.add_argument("--y0", type=float,  default=0.3, help="Bouding box position - top, range: 0.0-1.0")
+    parser.add_argument("--y1", type=float,  default=0.6, help="Bouding box position - bottom, range: 0.0-1.0")
     parser.add_argument("--no_plms", action='store_true', help="use DDIM instead")
     parser.add_argument("--guidance_scale", type=float,  default=7.5, help="")
 
@@ -319,7 +323,7 @@ if __name__ == "__main__":
             input_image = args.bg,
             prompt = args.prompt,
             images = [ args.inset ],
-            locations = [ [0.18, 0.08, 0.62, 0.75] ], # mask will be derived from box 
+            locations = [ [args.x0, args.y0, args.x1, args.y1] ], # mask will be derived from box 
             save_folder_name=args.prompt.lower().replace(" ", "_")
         )
 
