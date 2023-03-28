@@ -87,7 +87,9 @@ class DDIMSampler(object):
             # set alpha 
             if self.alpha_generator_func != None:
                 self.set_alpha_scale(self.model, alphas[i])
-
+                if  alphas[i] == 0:
+                    self.model.restore_first_conv_from_SD()
+                    
             # run 
             index = total_steps - i - 1
             input["timesteps"] = torch.full((b,), step, device=self.device, dtype=torch.long)
@@ -110,7 +112,7 @@ class DDIMSampler(object):
 
         e_t = self.model(input) 
         if uc is not None and guidance_scale != 1:
-            unconditional_input = dict(x=input["x"], timesteps=input["timesteps"], context=uc, inpainting_extra_input=input["inpainting_extra_input"])
+            unconditional_input = dict(x=input["x"], timesteps=input["timesteps"], context=uc, inpainting_extra_input=input["inpainting_extra_input"], grounding_extra_input=input['grounding_extra_input'])
             e_t_uncond = self.model( unconditional_input ) 
             e_t = e_t_uncond + guidance_scale * (e_t - e_t_uncond)
 

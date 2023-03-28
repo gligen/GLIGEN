@@ -237,11 +237,67 @@ class GatedSelfAttentionDense(nn.Module):
 
         N_visual = x.shape[1]
         objs = self.linear(objs)
-        
+
         x = x + self.scale*torch.tanh(self.alpha_attn) * self.attn(  self.norm1(torch.cat([x,objs],dim=1))  )[:,0:N_visual,:]
         x = x + self.scale*torch.tanh(self.alpha_dense) * self.ff( self.norm2(x) )  
         
         return x 
+
+
+
+
+
+
+class GatedSelfAttentionDense2(nn.Module):
+    def __init__(self, query_dim, context_dim,  n_heads, d_head):
+        super().__init__()
+        
+        # we need a linear projection since we need cat visual feature and obj feature
+        self.linear = nn.Linear(context_dim, query_dim)
+
+        self.attn = SelfAttention(query_dim=query_dim, heads=n_heads, dim_head=d_head)
+        self.ff = FeedForward(query_dim, glu=True)
+
+        self.norm1 = nn.LayerNorm(query_dim)
+        self.norm2 = nn.LayerNorm(query_dim)
+
+        self.register_parameter('alpha_attn', nn.Parameter(torch.tensor(0.)) )
+        self.register_parameter('alpha_dense', nn.Parameter(torch.tensor(0.)) )
+
+        # this can be useful: we can externally change magnitude of tanh(alpha)
+        # for example, when it is set to 0, then the entire model is same as original one 
+        self.scale = 1  
+
+
+    def forward(self, x, objs):
+
+        B, N_visual, _ = x.shape
+        B, N_ground, _ = objs.shape
+
+        objs = self.linear(objs)
+        
+        # sanity check 
+        size_v = math.sqrt(N_visual)
+        size_g = math.sqrt(N_ground)
+        assert int(size_v) == size_v, "Visual tokens must be square rootable"
+        assert int(size_g) == size_g, "Grounding tokens must be square rootable"
+        size_v = int(size_v)
+        size_g = int(size_g)
+
+        # select grounding token and resize it to visual token size as residual 
+        out = self.attn(  self.norm1(torch.cat([x,objs],dim=1))  )[:,N_visual:,:]
+        out = out.permute(0,2,1).reshape( B,-1,size_g,size_g )
+        out = torch.nn.functional.interpolate(out, (size_v,size_v), mode='bicubic')
+        residual = out.reshape(B,-1,N_visual).permute(0,2,1)
+        
+        # add residual to visual feature 
+        x = x + self.scale*torch.tanh(self.alpha_attn) * residual
+        x = x + self.scale*torch.tanh(self.alpha_dense) * self.ff( self.norm2(x) )  
+        
+        return x 
+
+
+
 
 
 class BasicTransformerBlock(nn.Module):
@@ -258,6 +314,9 @@ class BasicTransformerBlock(nn.Module):
         if fuser_type == "gatedSA":
             # note key_dim here actually is context_dim
             self.fuser = GatedSelfAttentionDense(query_dim, key_dim, n_heads, d_head) 
+        elif fuser_type == "gatedSA2":
+            # note key_dim here actually is context_dim
+            self.fuser = GatedSelfAttentionDense2(query_dim, key_dim, n_heads, d_head) 
         elif fuser_type == "gatedCA":
             self.fuser = GatedCrossAttentionDense(query_dim, key_dim, value_dim, n_heads, d_head) 
         else:
@@ -286,7 +345,7 @@ class SpatialTransformer(nn.Module):
         query_dim = n_heads * d_head
         self.norm = Normalize(in_channels)
 
-
+        
         self.proj_in = nn.Conv2d(in_channels,
                                  query_dim,
                                  kernel_size=1,

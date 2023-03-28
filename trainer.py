@@ -12,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 import os 
 import shutil
 import torchvision
+from convert_ckpt import add_additional_channels
 import math
 from torch.nn.parallel import DistributedDataParallel as DDP
 from tqdm import tqdm
@@ -19,6 +20,7 @@ from distributed import get_rank, synchronize, get_world_size
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 from copy import deepcopy
 from inpaint_mask_func import draw_masks_from_boxes
+from ldm.modules.attention import BasicTransformerBlock
 try:
     from apex import amp
 except:
@@ -181,18 +183,19 @@ class Trainer:
         self.text_encoder = instantiate_from_config(config.text_encoder).to(self.device)
         self.diffusion = instantiate_from_config(config.diffusion).to(self.device)
 
-
+        
         state_dict = read_official_ckpt(  os.path.join(config.DATA_ROOT, config.official_ckpt_name)   )
+        
+        # modify the input conv for SD if necessary (grounding as unet input; inpaint)
+        additional_channels = self.model.additional_channel_from_downsampler
         if self.config.inpaint_mode:
-            assert self.config.ckpt is not None, "Since it will skip loading weights for the Unet, one MUST Specify an adapted SD or GLIGen ckpt"
-            # Do not load official pretrained weights from unet model as GLIGEN model input channel is modified for inpainting (num_channel from 4 to 4+4+1). 
-            # Thus you need to specify an adapted SD ckpt or an GLIGEN ckpt wholse input is modified to 4+4+1    
-            # Of course, one can also add this adaption code into the current script (in this case, one can comment out the above assertion), but I am too lazy to do so
-            # In our case, we actually specify an adapted GLIGEN ckpt which is trained for generation.          
-        else:
-            # Generation mode; load original SD ckpt 
-            missing_keys, unexpected_keys = self.model.load_state_dict( state_dict["model"], strict=False  )
-            assert unexpected_keys == []
+            additional_channels += 5 # 5 = 4(latent) + 1(mask)
+        add_additional_channels(state_dict["model"], additional_channels)
+        self.input_conv_train = True if additional_channels>0 else False
+
+        # load original SD ckpt (with inuput conv may be modified) 
+        missing_keys, unexpected_keys = self.model.load_state_dict( state_dict["model"], strict=False  )
+        assert unexpected_keys == []
         original_params_names = list( state_dict["model"].keys()  ) # used for sanity check later 
         
         self.autoencoder.load_state_dict( state_dict["autoencoder"]  )
@@ -204,19 +207,16 @@ class Trainer:
         disable_grads(self.autoencoder)
         disable_grads(self.text_encoder)
 
-
-
         # = = = = = = = = = = = = = load from ckpt: (usually for inpainting training) = = = = = = = = = = = = = #
         if self.config.ckpt is not None:
             first_stage_ckpt = torch.load(self.config.ckpt, map_location="cpu")
             self.model.load_state_dict(first_stage_ckpt["model"])
 
 
-
-
         # = = = = = = = = = = = = = = = = = create opt = = = = = = = = = = = = = = = = = #
         params = []
         trainable_names = []
+        all_params_name = []
         for name, p in self.model.named_parameters():
             if ("transformer_blocks" in name) and ("fuser" in name):
                 # New added Attention layers 
@@ -226,20 +226,21 @@ class Trainer:
                 # Grounding token processing network 
                 params.append(p) 
                 trainable_names.append(name)
-            elif (self.config.inpaint_mode) and ("input_blocks.0.0.weight" in name):
-                # First conv layer in inpaitning model 
+            elif  "downsample_net" in name:
+                # Grounding downsample network (used in input) 
+                params.append(p) 
+                trainable_names.append(name)
+            elif (self.input_conv_train) and ("input_blocks.0.0.weight" in name):
+                # First conv layer was modified, thus need to train 
                 params.append(p) 
                 trainable_names.append(name)
             else:
                 # Following make sure we do not miss any new params
                 # all new added trainable params have to be haddled above
                 # otherwise it will trigger the following error  
-                assert name in original_params_names, name  
+                assert name in original_params_names, name 
+            all_params_name.append(name) 
 
-        if not self.config.inpaint_mode:
-            # In generation case, following must be true 
-            all_params_name = list( self.model.state_dict().keys()  )
-            assert set(all_params_name) == set(trainable_names + original_params_names) 
 
         self.opt = torch.optim.AdamW(params, lr=config.base_learning_rate, weight_decay=config.weight_decay) 
         count_params(params)
@@ -304,8 +305,15 @@ class Trainer:
 
 
         # = = = = = = = = = = = = = = = = = = = = misc and ddp = = = = = = = = = = = = = = = = = = = =#    
+        
+        # func return input for grounding tokenizer 
         self.grounding_tokenizer_input = instantiate_from_config(config.grounding_tokenizer_input)
         self.model.grounding_tokenizer_input = self.grounding_tokenizer_input
+        
+        # func return input for grounding downsampler  
+        self.grounding_downsampler_input = None
+        if 'grounding_downsampler_input' in config:
+            self.grounding_downsampler_input = instantiate_from_config(config.grounding_downsampler_input)
 
         if get_rank() == 0:       
             self.image_caption_saver = ImageCaptionSaver(self.name)
@@ -335,11 +343,15 @@ class Trainer:
             masked_z = z*inpainting_mask
             inpainting_extra_input = torch.cat([masked_z,inpainting_mask], dim=1)              
         
-        return z, t, context, inpainting_extra_input 
+        grounding_extra_input = None
+        if self.grounding_downsampler_input != None:
+            grounding_extra_input = self.grounding_downsampler_input.prepare(batch)
+
+        return z, t, context, inpainting_extra_input, grounding_extra_input 
 
 
     def run_one_step(self, batch):
-        x_start, t, context, inpainting_extra_input = self.get_input(batch)
+        x_start, t, context, inpainting_extra_input, grounding_extra_input = self.get_input(batch)
         noise = torch.randn_like(x_start)
         x_noisy = self.diffusion.q_sample(x_start=x_start, t=t, noise=noise)
 
@@ -348,6 +360,7 @@ class Trainer:
                     timesteps=t, 
                     context=context, 
                     inpainting_extra_input=inpainting_extra_input,
+                    grounding_extra_input=grounding_extra_input,
                     grounding_input=grounding_input)
         model_output = self.model(input)
         
@@ -435,22 +448,31 @@ class Trainer:
                 inpainting_mask = draw_masks_from_boxes(batch['boxes'], 64, randomize_fg_mask=self.config.randomize_fg_mask, random_add_bg_mask=self.config.random_add_bg_mask).cuda()
                 masked_z = z*inpainting_mask
                 inpainting_extra_input = torch.cat([masked_z,inpainting_mask], dim=1)
-
+            
+            grounding_extra_input = None
+            if self.grounding_downsampler_input != None:
+                grounding_extra_input = self.grounding_downsampler_input.prepare(batch)
+            
             grounding_input = self.grounding_tokenizer_input.prepare(batch)
             input = dict( x=None, 
                           timesteps=None, 
                           context=context, 
                           inpainting_extra_input=inpainting_extra_input,
+                          grounding_extra_input=grounding_extra_input,
                           grounding_input=grounding_input )
             samples = plms_sampler.sample(S=50, shape=shape, input=input, uc=uc, guidance_scale=5)
             
             autoencoder_wo_wrapper = self.autoencoder # Note itself is without wrapper since we do not train that. 
             samples = autoencoder_wo_wrapper.decode(samples).cpu()
+            samples = torch.clamp(samples, min=-1, max=1)
 
             masked_real_image =  batch["image"]*torch.nn.functional.interpolate(inpainting_mask, size=(512, 512)) if self.config.inpaint_mode else None
             self.image_caption_saver(samples, real_images_with_box_drawing,  masked_real_image, batch["caption"], iter_name)
 
         ckpt = dict(model = model_wo_wrapper.state_dict(),
+                    text_encoder = self.text_encoder.state_dict(),
+                    autoencoder = self.autoencoder.state_dict(),
+                    diffusion = self.diffusion.state_dict(),
                     opt = self.opt.state_dict(),
                     scheduler= self.scheduler.state_dict(),
                     iters = self.iter_idx+1,
@@ -460,11 +482,5 @@ class Trainer:
             ckpt["ema"] = self.ema.state_dict()
         torch.save( ckpt, os.path.join(self.name, "checkpoint_"+str(iter_name).zfill(8)+".pth") )
         torch.save( ckpt, os.path.join(self.name, "checkpoint_latest.pth") )
-
-
-
-
-
-
 
 

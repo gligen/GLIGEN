@@ -12,9 +12,11 @@ from trainer import read_official_ckpt, batch_to_device
 from inpaint_mask_func import draw_masks_from_boxes
 import numpy as np
 import clip 
+from scipy.io import loadmat
 from functools import partial
 import torchvision.transforms.functional as F
-
+import torchvision.transforms.functional as TF
+import torchvision.transforms as transforms
 
 device = "cuda"
 
@@ -69,7 +71,7 @@ def load_ckpt(ckpt_path):
     
     saved_ckpt = torch.load(ckpt_path)
     config = saved_ckpt["config_dict"]["_content"]
-    
+
     model = instantiate_from_config(config['model']).to(device).eval()
     autoencoder = instantiate_from_config(config['autoencoder']).to(device).eval()
     text_encoder = instantiate_from_config(config['text_encoder']).to(device).eval()
@@ -185,6 +187,11 @@ def prepare_batch(meta, batch=1, max_objs=30):
     return batch_to_device(out, device) 
 
 
+def crop_and_resize(image):
+    crop_size = min(image.size)
+    image = TF.center_crop(image, crop_size)
+    image = image.resize( (512, 512) )
+    return image
 
 
 
@@ -211,6 +218,126 @@ def prepare_batch_kp(meta, batch=1, max_persons_per_image=8):
     return batch_to_device(out, device) 
 
 
+@torch.no_grad()
+def prepare_batch_hed(meta, batch=1):
+    
+    pil_to_tensor = transforms.PILToTensor()
+
+    hed_edge = Image.open(meta['hed_image']).convert("RGB")
+    hed_edge = crop_and_resize(hed_edge)
+    hed_edge = ( pil_to_tensor(hed_edge).float()/255 - 0.5 ) / 0.5
+
+    out = {
+        "hed_edge" : hed_edge.unsqueeze(0).repeat(batch,1,1,1),
+        "mask" : torch.ones(batch,1),
+    }
+    return batch_to_device(out, device) 
+
+
+@torch.no_grad()
+def prepare_batch_canny(meta, batch=1):
+    """ 
+    The canny edge is very sensitive since I set a fixed canny hyperparamters; 
+    Try to use the same setting to get edge 
+
+    img = cv.imread(args.image_path, cv.IMREAD_GRAYSCALE)
+    edges = cv.Canny(img,100,200)
+    edges = PIL.Image.fromarray(edges)
+
+    """
+    
+    pil_to_tensor = transforms.PILToTensor()
+
+    canny_edge = Image.open(meta['canny_image']).convert("RGB")
+    canny_edge = crop_and_resize(canny_edge)
+
+    canny_edge = ( pil_to_tensor(canny_edge).float()/255 - 0.5 ) / 0.5
+
+    out = {
+        "canny_edge" : canny_edge.unsqueeze(0).repeat(batch,1,1,1),
+        "mask" : torch.ones(batch,1),
+    }
+    return batch_to_device(out, device) 
+
+
+@torch.no_grad()
+def prepare_batch_depth(meta, batch=1):
+    
+    pil_to_tensor = transforms.PILToTensor()
+
+    depth = Image.open(meta['depth']).convert("RGB")
+    depth = crop_and_resize(depth)
+    depth = ( pil_to_tensor(depth).float()/255 - 0.5 ) / 0.5
+
+    out = {
+        "depth" : depth.unsqueeze(0).repeat(batch,1,1,1),
+        "mask" : torch.ones(batch,1),
+    }
+    return batch_to_device(out, device) 
+
+
+
+@torch.no_grad()
+def prepare_batch_normal(meta, batch=1):
+    """
+    We only train normal model on the DIODE dataset which only has a few scene.
+
+    """
+    
+    pil_to_tensor = transforms.PILToTensor()
+
+    normal = Image.open(meta['normal']).convert("RGB")
+    normal = crop_and_resize(normal)
+    normal = ( pil_to_tensor(normal).float()/255 - 0.5 ) / 0.5
+
+    out = {
+        "normal" : normal.unsqueeze(0).repeat(batch,1,1,1),
+        "mask" : torch.ones(batch,1),
+    }
+    return batch_to_device(out, device) 
+
+
+
+
+
+def colorEncode(labelmap, colors):
+    labelmap = labelmap.astype('int')
+    labelmap_rgb = np.zeros((labelmap.shape[0], labelmap.shape[1], 3),
+                            dtype=np.uint8)
+
+    for label in np.unique(labelmap):
+        if label < 0:
+            continue
+        labelmap_rgb += (labelmap == label)[:, :, np.newaxis] * \
+            np.tile(colors[label],
+                    (labelmap.shape[0], labelmap.shape[1], 1))
+
+    return labelmap_rgb
+
+@torch.no_grad()
+def prepare_batch_sem(meta, batch=1):
+
+    pil_to_tensor = transforms.PILToTensor()
+
+    sem = Image.open( meta['sem']  ).convert("L") # semantic class index 0,1,2,3,4 in uint8 representation 
+    sem = TF.center_crop(sem, min(sem.size))
+    sem = sem.resize( (512, 512), Image.NEAREST ) # acorrding to official, it is nearest by default, but I don't know why it can prodice new values if not specify explicitly
+    try:
+        sem_color = colorEncode(np.array(sem), loadmat('color150.mat')['colors'])
+        Image.fromarray(sem_color).save("sem_vis.png")
+    except:
+        pass 
+    sem = pil_to_tensor(sem)[0,:,:]
+    input_label = torch.zeros(152, 512, 512)
+    sem = input_label.scatter_(0, sem.long().unsqueeze(0), 1.0)
+
+    out = {
+        "sem" : sem.unsqueeze(0).repeat(batch,1,1,1),
+        "mask" : torch.ones(batch,1),
+    }
+    return batch_to_device(out, device) 
+
+
 
 @torch.no_grad()
 def run(meta, config, starting_noise=None):
@@ -220,6 +347,11 @@ def run(meta, config, starting_noise=None):
 
     grounding_tokenizer_input = instantiate_from_config(config['grounding_tokenizer_input'])
     model.grounding_tokenizer_input = grounding_tokenizer_input
+    
+    grounding_downsampler_input = None
+    if "grounding_downsampler_input" in config:
+        grounding_downsampler_input = instantiate_from_config(config['grounding_downsampler_input'])
+
 
 
     # - - - - - update config from args - - - - - # 
@@ -230,10 +362,22 @@ def run(meta, config, starting_noise=None):
     # - - - - - prepare batch - - - - - #
     if "keypoint" in meta["ckpt"]:
         batch = prepare_batch_kp(meta, config.batch_size)
+    elif "hed" in meta["ckpt"]:
+        batch = prepare_batch_hed(meta, config.batch_size)
+    elif "canny" in meta["ckpt"]:
+        batch = prepare_batch_canny(meta, config.batch_size)
+    elif "depth" in meta["ckpt"]:
+        batch = prepare_batch_depth(meta, config.batch_size)
+    elif "normal" in meta["ckpt"]:
+        batch = prepare_batch_normal(meta, config.batch_size)
+    elif "sem" in meta["ckpt"]:
+        batch = prepare_batch_sem(meta, config.batch_size)
     else:
         batch = prepare_batch(meta, config.batch_size)
     context = text_encoder.encode(  [meta["prompt"]]*config.batch_size  )
     uc = text_encoder.encode( config.batch_size*[""] )
+    if args.negative_prompt is not None:
+        uc = text_encoder.encode( config.batch_size*[args.negative_prompt] )
 
 
     # - - - - - sampler - - - - - # 
@@ -265,12 +409,18 @@ def run(meta, config, starting_noise=None):
 
     # - - - - - input for gligen - - - - - #
     grounding_input = grounding_tokenizer_input.prepare(batch)
+    grounding_extra_input = None
+    if grounding_downsampler_input != None:
+        grounding_extra_input = grounding_downsampler_input.prepare(batch)
+
     input = dict(
                 x = starting_noise, 
                 timesteps = None, 
                 context = context, 
                 grounding_input = grounding_input,
-                inpainting_extra_input = inpainting_extra_input
+                inpainting_extra_input = inpainting_extra_input,
+                grounding_extra_input = grounding_extra_input,
+
             )
 
 
@@ -305,9 +455,11 @@ if __name__ == "__main__":
     parser.add_argument("--folder", type=str,  default="generation_samples", help="root folder for output")
 
 
-    parser.add_argument("--batch_size", type=int, default=5, help="This will overwrite the one in yaml.")
-    parser.add_argument("--no_plms", action='store_true', help="use DDIM instead")
+    parser.add_argument("--batch_size", type=int, default=5, help="")
+    parser.add_argument("--no_plms", action='store_true', help="use DDIM instead. WARNING: I did not test the code yet")
     parser.add_argument("--guidance_scale", type=float,  default=7.5, help="")
+    parser.add_argument("--negative_prompt", type=str,  default='longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality', help="")
+    #parser.add_argument("--negative_prompt", type=str,  default=None, help="")
     args = parser.parse_args()
     
 
@@ -315,19 +467,19 @@ if __name__ == "__main__":
     meta_list = [ 
 
         # - - - - - - - - GLIGEN on text grounding for generation - - - - - - - - # 
-        dict(
-            ckpt = "gligen_checkpoints/checkpoint_generation_text.pth",
-            prompt = "a teddy bear sitting next to a bird",
-            phrases = ['a teddy bear', 'a bird'],
-            locations = [ [0.0,0.09,0.33,0.76], [0.55,0.11,1.0,0.8] ],
-            alpha_type = [0.3, 0.0, 0.7],
-            save_folder_name="checkpoint_generation_text_test0"
-        ), 
+        # dict(
+        #     ckpt = "../code_merge/gligen_checkpoints/checkpoint_generation_text.pth",
+        #     prompt = "a teddy bear sitting next to a bird",
+        #     phrases = ['a teddy bear', 'a bird'],
+        #     locations = [ [0.0,0.09,0.33,0.76], [0.55,0.11,1.0,0.8] ],
+        #     alpha_type = [0.3, 0.0, 0.7],
+        #     save_folder_name="checkpoint_generation_text_test0"
+        # ), 
 
 
         # - - - - - - - - GLIGEN on text grounding for inpainting - - - - - - - - # 
         dict(
-            ckpt = "gligen_checkpoints/checkpoint_inpainting_text.pth",
+            ckpt = "../gligen_checkpoints/checkpoint_inpainting_text.pth",
             input_image = "inference_images/dalle2_museum.jpg",
             prompt = "a corgi and a cake",
             phrases =   ['corgi', 'cake'],
@@ -337,92 +489,148 @@ if __name__ == "__main__":
 
 
         # - - - - - - - - GLIGEN on image grounding for generation - - - - - - - - # 
-        dict(
-            ckpt = "gligen_checkpoints/checkpoint_generation_text_image.pth",
-            prompt = "an alarm clock sitting on the beach",
-            images = ['inference_images/clock.png'],
-            phrases = ['alarm clock'],
-            locations = [ [0.0,0.09,0.53,0.76] ],
-            alpha_type = [1.0, 0.0, 0.0],
-            save_folder_name="checkpoint_generation_text_image_test0"
-        ),
+        # dict(
+        #     ckpt = "gligen_checkpoints/checkpoint_generation_text_image.pth",
+        #     prompt = "an alarm clock sitting on the beach",
+        #     images = ['inference_images/clock.png'],
+        #     phrases = ['alarm clock']
+        #     locations = [ [0.0,0.09,0.53,0.76] ],
+        #     alpha_type = [1.0, 0.0, 0.0],
+        #     save_folder_name="checkpoint_generation_text_image_test0"
+        # ),
 
 
 
         # - - - - - - - - GLIGEN on text and style grounding for generation - - - - - - - - # 
-        dict(
-            ckpt = "gligen_checkpoints/checkpoint_generation_text_image.pth",
-            prompt = "a brick house in the woods, anime, oil painting",
-            phrases =   ['a brick house',            'placehoder'],
-            images =    ['inference_images/placeholder.png', 'inference_images/style_golden.jpg'],
-            locations = [ [0.4,0.2,1.0,0.8],         [0.0, 1.0, 0.0, 1.0] ],
-            alpha_type = [1, 0, 0],  
-            text_mask = [1,0],  # the second text feature will be masked 
-            image_mask =[0,1],  # the first image feature will be masked
-            save_folder_name="checkpoint_generation_text_image_test1"
-        ), 
+        # dict(
+        #     ckpt = "gligen_checkpoints/checkpoint_generation_text_image.pth",
+        #     prompt = "a brick house in the woods, anime, oil painting",
+        #     phrases =   ['a brick house',            'placehoder'],
+        #     images =    ['inference_images/placeholder.png', 'inference_images/style_golden.jpg'],
+        #     locations = [ [0.4,0.2,1.0,0.8],         [0.0, 1.0, 0.0, 1.0] ],
+        #     alpha_type = [1, 0, 0],  
+        #     text_mask = [1,0],  # the second text feature will be masked 
+        #     image_mask =[0,1],  # the first image feature will be masked
+        #     save_folder_name="checkpoint_generation_text_image_test1"
+        # ), 
 
 
         # - - - - - - - - GLIGEN on image grounding for inpainting - - - - - - - - # 
-        dict(
-            ckpt = "gligen_checkpoints/checkpoint_inpainting_text_image.pth",
-            input_image = "inference_images/beach.jpg",
-            prompt = "a bigben on the beach",
-            images = [ 'inference_images/bigben.jpg'],
-            locations = [ [0.18, 0.08, 0.62, 0.75] ], # mask will be derived from box 
-            save_folder_name="checkpoint_inpainting_text_image_test0"
-        ),
+        # dict(
+        #     ckpt = "gligen_checkpoints/checkpoint_inpainting_text_image.pth",
+        #     input_image = "inference_images/beach.jpg",
+        #     prompt = "a bigben on the beach",
+        #     images = [ 'inference_images/bigben.jpg'],
+        #     locations = [ [0.18, 0.08, 0.62, 0.75] ], # mask will be derived from box 
+        #     save_folder_name="checkpoint_inpainting_text_image_test0"
+        # ),
+
+
+
+        # - - - - - - - - GLIGEN on hed grounding for generation - - - - - - - - # 
+        # dict(
+        #     ckpt ="../gligen_checkpoints/hed/checkpoint_00150001.pth",
+        #     prompt = "a man is eating breakfast",  
+        #     hed_image = 'inference_images/hed_man_eat.png',
+        #     save_folder_name="hed",
+        #     alpha_type = [0.9, 0, 0.1], 
+        # ),
+
+
+
+
+        # - - - - - - - - GLIGEN on canny grounding for generation - - - - - - - - # 
+        # dict(
+        #     ckpt ="../gligen_checkpoints/canny/checkpoint_00150001.pth",
+        #     prompt = "A Humanoid Robot Designed for Companionship", 
+        #     canny_image = 'inference_images/canny_robot.png',
+        #     alpha_type = [0.9, 0, 0.1], 
+        #     save_folder_name="canny"
+        # ),
+
+
+
+
+        # - - - - - - - - GLIGEN on normal grounding for generation - - - - - - - - # 
+        # dict(
+        #     ckpt ="../gligen_checkpoints/normal/tag00/checkpoint_00010001.pth",
+        #     prompt = "a large tree with no leaves in front of a building", # 
+        #     normal = 'inference_images/normal_tree_building.jpg', # a normal map 
+        #     alpha_type = [0.7, 0, 0.3], 
+        #     save_folder_name="normal",
+        # ),
+
+
+        # - - - - - - - - GLIGEN on depth grounding for generation - - - - - - - - # 
+        # dict(
+        #     ckpt ="../gligen_checkpoints/depth/checkpoint_00150001.pth",
+        #     prompt = "a Vibrant colorful Bird Sitting on Tree Branch", # 
+        #     depth = 'inference_images/depth_bird.png', 
+        #     alpha_type = [0.7, 0, 0.3], 
+        #     save_folder_name="depth"
+        # ),
+
+
+        # - - - - - - - - GLIGEN on sem grounding for generation - - - - - - - - # 
+        # dict(
+        #     ckpt ="../gligen_checkpoints/sem/tag00/checkpoint_00060001.pth",
+        #     prompt = "a living room filled with lots of furniture and plants", # 
+        #     sem = 'inference_images/sem_ade_living_room.png', # ADE raw annotation  
+        #     alpha_type = [0.7, 0, 0.3], 
+        #     save_folder_name="sem"
+        # ),
+
 
 
         # - - - - - - - - GLIGEN on keypoint grounding for generation - - - - - - - - # 
-        dict(
-            ckpt = "gligen_checkpoints/checkpoint_generation_keypoint.pth",
-            prompt = "A young man and a small boy are talking",
-            locations = [  
-                            [
-                                [0.7598, 0.2542],
-                                [0.7431, 0.2104],
-                                [0.8118, 0.2021],
-                                [0.0000, 0.0000],
-                                [0.9514, 0.1813],
-                                [0.7806, 0.2917],
-                                [0.0000, 0.0000],
-                                [0.6785, 0.5125],
-                                [0.0000, 0.0000],
-                                [0.5389, 0.6479],
-                                [0.6785, 0.6750],
-                                [0.7973, 0.7042],
-                                [0.0000, 0.0000],
-                                [0.6181, 0.7375],
-                                [0.9764, 0.8458],
-                                [0.0000, 0.0000],
-                                [0.0000, 0.0000]
-                            ], 
+        # dict(
+        #     ckpt = "gligen_checkpoints/checkpoint_generation_keypoint.pth",
+        #     prompt = "A young man and a small boy are talking",
+        #     locations = [  
+        #                     [
+        #                         [0.7598, 0.2542],
+        #                         [0.7431, 0.2104],
+        #                         [0.8118, 0.2021],
+        #                         [0.0000, 0.0000],
+        #                         [0.9514, 0.1813],
+        #                         [0.7806, 0.2917],
+        #                         [0.0000, 0.0000],
+        #                         [0.6785, 0.5125],
+        #                         [0.0000, 0.0000],
+        #                         [0.5389, 0.6479],
+        #                         [0.6785, 0.6750],
+        #                         [0.7973, 0.7042],
+        #                         [0.0000, 0.0000],
+        #                         [0.6181, 0.7375],
+        #                         [0.9764, 0.8458],
+        #                         [0.0000, 0.0000],
+        #                         [0.0000, 0.0000]
+        #                     ], 
 
-                            [
-                                [0.2681, 0.4313],
-                                [0.2514, 0.3979],
-                                [0.0000, 0.0000],
-                                [0.0785, 0.3854],
-                                [0.0000, 0.0000],
-                                [0.0910, 0.5583],
-                                [0.0000, 0.0000],
-                                [0.1243, 0.8479],
-                                [0.0000, 0.0000],
-                                [0.0000, 0.0000],
-                                [0.0000, 0.0000],
-                                [0.0000, 0.0000],
-                                [0.0000, 0.0000],
-                                [0.2410, 0.8146],
-                                [0.1202, 0.6146],
-                                [0.0000, 0.0000],
-                                [0.2743, 0.7188]
-                            ], 
+        #                     [
+        #                         [0.2681, 0.4313],
+        #                         [0.2514, 0.3979],
+        #                         [0.0000, 0.0000],
+        #                         [0.0785, 0.3854],
+        #                         [0.0000, 0.0000],
+        #                         [0.0910, 0.5583],
+        #                         [0.0000, 0.0000],
+        #                         [0.1243, 0.8479],
+        #                         [0.0000, 0.0000],
+        #                         [0.0000, 0.0000],
+        #                         [0.0000, 0.0000],
+        #                         [0.0000, 0.0000],
+        #                         [0.0000, 0.0000],
+        #                         [0.2410, 0.8146],
+        #                         [0.1202, 0.6146],
+        #                         [0.0000, 0.0000],
+        #                         [0.2743, 0.7188]
+        #                     ], 
 
-             ],  # from id=18150 val set in coco2017k
-            alpha_type = [0.3, 0.0, 0.7],
-            save_folder_name="checkpoint_generation_keypoint_test0"
-        ),
+        #      ],  # from id=18150 val set in coco2017k
+        #     alpha_type = [0.3, 0.0, 0.7],
+        #     save_folder_name="checkpoint_generation_keypoint_test0"
+        # ),
 
 
 
@@ -430,6 +638,7 @@ if __name__ == "__main__":
 
 
     starting_noise = torch.randn(args.batch_size, 4, 64, 64).to(device)
+    # starting_noise = None
     for meta in meta_list:
         run(meta, args, starting_noise)
 

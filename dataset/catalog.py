@@ -25,6 +25,25 @@ class DatasetCatalog:
             ),
         }
 
+
+        self.FlickrGroundingHed = {
+            "target": "dataset.dataset_hed.HedDataset",
+            "train_params":dict(
+                tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv/train-00.tsv'),
+                hed_tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv_hed/train-00.tsv'),
+            ),
+        }
+
+
+        self.FlickrGroundingCanny = {
+            "target": "dataset.dataset_canny.CannyDataset",
+            "train_params":dict(
+                tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv/train-00.tsv'),
+                canny_tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv_canny/train-00.tsv'),
+            ),
+        }
+
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # 
 
         self.SBUGrounding = {   
@@ -44,6 +63,37 @@ class DatasetCatalog:
                 tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv/train-00.tsv'),
             ),
         }
+
+
+
+
+
+        self.CC3MGroundingHed = {
+            "target": "dataset.dataset_hed.HedDataset",
+            "train_params":dict(
+                tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv/train-00.tsv'),
+                hed_tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv_hed/train-00.tsv'),
+            ),
+        }
+
+
+        self.CC3MGroundingCanny = {
+            "target": "dataset.dataset_canny.CannyDataset",
+            "train_params":dict(
+                tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv/train-00.tsv'),
+                canny_tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv_canny/train-00.tsv'),
+            ),
+        }
+
+
+        self.CC3MGroundingDepth = {
+            "target": "dataset.dataset_depth.DepthDataset",
+            "train_params":dict(
+                tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv/train-00.tsv'),
+                depth_tsv_path=os.path.join(ROOT,'GROUNDING/CC3M/tsv_depth/train-00.tsv'),
+            ),
+        }
+
 
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # 
@@ -77,5 +127,32 @@ class DatasetCatalog:
                 caption_json_path = os.path.join(ROOT,'COCO/annotations2017/captions_train2017.json'),
             ),
         }
+
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # 
+
+        self.DIODENormal = {   
+            "target": "dataset.dataset_normal.NormalDataset",
+            "train_params":dict(
+                image_rootdir = os.path.join(ROOT,'normal/image_train'),
+                normal_rootdir = os.path.join(ROOT,'normal/normal_train'),
+                caption_path = os.path.join(ROOT,'normal/diode_cation.json'),
+            ),
+        }
+
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # 
+
+        self.ADESemantic = {   
+            "target": "dataset.dataset_sem.SemanticDataset",
+            "train_params":dict(
+                image_rootdir = os.path.join(ROOT,'ADE/ADEChallengeData2016/images/training'),
+                sem_rootdir = os.path.join(ROOT,'ADE/ADEChallengeData2016/annotations/training'),
+                caption_path = os.path.join(ROOT,'ADE/ade_train_images_cation.json'),
+            ),
+        }
+
+
+
 
 

@@ -20,7 +20,7 @@ from ldm.modules.attention import SpatialTransformer
 # from .positionnet  import PositionNet
 from torch.utils import checkpoint
 from ldm.util import instantiate_from_config
-
+from copy import deepcopy
 
 class TimestepBlock(nn.Module):
     """
@@ -254,6 +254,7 @@ class UNetModel(nn.Module):
         context_dim=None,  
         fuser_type = None,
         inpaint_mode = False,
+        grounding_downsampler = None,
         grounding_tokenizer = None,
     ):
         super().__init__()
@@ -272,7 +273,7 @@ class UNetModel(nn.Module):
         self.context_dim = context_dim
         self.fuser_type = fuser_type
         self.inpaint_mode = inpaint_mode
-        assert fuser_type in ["gatedSA", "gatedCA"]
+        assert fuser_type in ["gatedSA","gatedSA2","gatedCA"]
 
         self.grounding_tokenizer_input = None # set externally 
 
@@ -285,11 +286,23 @@ class UNetModel(nn.Module):
         )
 
 
+
+        self.downsample_net = None 
+        self.additional_channel_from_downsampler = 0
+        self.first_conv_type = "SD"
+        self.first_conv_restorable = True 
+        if grounding_downsampler is not None:
+            self.downsample_net = instantiate_from_config(grounding_downsampler)  
+            self.additional_channel_from_downsampler = self.downsample_net.out_dim
+            self.first_conv_type = "GLIGEN"
+
         if inpaint_mode:
             # The new added channels are: masked image (encoded image) and mask, which is 4+1
-            self.input_blocks = nn.ModuleList([TimestepEmbedSequential(conv_nd(dims, in_channels+in_channels+1, model_channels, 3, padding=1))])
+            in_c = in_channels+self.additional_channel_from_downsampler+in_channels+1
+            self.first_conv_restorable = False # in inpaint; You must use extra channels to take in masked real image  
         else:
-            self.input_blocks = nn.ModuleList([TimestepEmbedSequential(conv_nd(dims, in_channels, model_channels, 3, padding=1))])
+            in_c = in_channels+self.additional_channel_from_downsampler
+        self.input_blocks = nn.ModuleList([TimestepEmbedSequential(conv_nd(dims, in_c, model_channels, 3, padding=1))])
 
 
         input_block_chans = [model_channels]
@@ -381,8 +394,27 @@ class UNetModel(nn.Module):
             zero_module(conv_nd(dims, model_channels, out_channels, 3, padding=1)),
         )
 
-        self.position_net = instantiate_from_config(grounding_tokenizer)  
+        self.position_net = instantiate_from_config(grounding_tokenizer) 
         
+
+    def restore_first_conv_from_SD(self):
+        if self.first_conv_restorable:
+            device = self.input_blocks[0][0].weight.device
+
+            SD_weights = th.load("SD_input_conv_weight_bias.pth")
+            self.GLIGEN_first_conv_state_dict = deepcopy(self.input_blocks[0][0].state_dict())
+
+            self.input_blocks[0][0] = conv_nd(2, 4, 320, 3, padding=1)
+            self.input_blocks[0][0].load_state_dict(SD_weights)
+            self.input_blocks[0][0].to(device)
+
+            self.first_conv_type = "SD"
+        else:
+            print("First conv layer is not restorable and skipped this process, probably because this is an inpainting model?")
+
+
+    def restore_first_conv_from_GLIGEN(self):
+        breakpoint() # TODO 
 
 
     def forward(self, input):
@@ -406,7 +438,12 @@ class UNetModel(nn.Module):
 
         # input tensor  
         h = input["x"]
+        if self.downsample_net != None and self.first_conv_type=="GLIGEN":
+            temp  = self.downsample_net(input["grounding_extra_input"])
+            h = th.cat( [h,temp], dim=1 )
         if self.inpaint_mode:
+            if self.downsample_net != None:
+                breakpoint() # TODO: think about this case 
             h = th.cat( [h, input["inpainting_extra_input"]], dim=1 )
         
         # Text input 

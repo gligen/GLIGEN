@@ -1,0 +1,81 @@
+diffusion:
+  target: ldm.models.diffusion.ldm.LatentDiffusion
+  params:
+    linear_start: 0.00085
+    linear_end: 0.012
+    timesteps: 1000
+   
+
+model:
+  target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+  params:
+    image_size: 64 # unused in the unet, but will be used when create xT
+    in_channels: 4
+    out_channels: 4
+    model_channels: 320
+    attention_resolutions: [ 4, 2, 1 ]
+    num_res_blocks: 2
+    channel_mult: [ 1, 2, 4, 4 ]
+    num_heads: 8
+    transformer_depth: 1
+    context_dim: 768
+    fuser_type: gatedSA  #  gatedCA or gatedSA. We have ablate this, self-attention is better than cross-attention, thus please set this as gatedSA usually
+    use_checkpoint: True
+
+
+    grounding_downsampler:
+      target: ldm.modules.diffusionmodules.sem_grounding_downsampler.GroundingDownsampler
+      params:
+        in_dim: 152
+        resize_input: 256
+        out_dim: 8 
+
+    grounding_tokenizer:
+      target: ldm.modules.diffusionmodules.sem_grounding_net.PositionNet
+      params:
+        in_dim: 152
+        resize_input: 256
+        out_dim: 768 
+
+
+autoencoder:
+  target: ldm.models.autoencoder.AutoencoderKL
+  params:
+    scale_factor: 0.18215 
+    embed_dim: 4
+    ddconfig:
+      double_z: true
+      z_channels: 4
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+
+
+text_encoder:
+  target: ldm.modules.encoders.modules.FrozenCLIPEmbedder
+
+
+
+
+train_dataset_names: 
+  ADESemantic:
+    prob_use_caption: 1
+    image_size: 512
+    random_flip: True
+
+
+grounding_tokenizer_input:
+  target: grounding_input.sem_grounding_tokinzer_input.GroundingNetInput
+
+
+grounding_downsampler_input:
+  target: grounding_input.sem_grounding_downsampler_input.GroundingDSInput

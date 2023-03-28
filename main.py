@@ -74,6 +74,8 @@ if __name__ == "__main__":
     synchronize()
     trainer.start_training()
 
+    # CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 main.py  --yaml_file=configs/ade_sem.yaml  --DATA_ROOT=../../DATA   --batch_size=4
+
 
 
 
