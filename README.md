@@ -28,7 +28,7 @@ We provide [dockerfile](env_docker/Dockerfile) to setup environment.
 
 ## Download GLIGEN models
 
-We provide five checkpoints for different use scenarios. All models here are based on SD-V-1.4.
+We provide ten checkpoints for different use scenarios. All models here are based on SD-V-1.4.
 | Mode       | Modality       | Download                                                                                                       |
 |------------|----------------|----------------------------------------------------------------------------------------------------------------|
 | Generation | Box+Text       | [HF Hub](https://huggingface.co/gligen/gligen-generation-text-box/blob/main/diffusion_pytorch_model.bin)       |
@@ -41,6 +41,8 @@ We provide five checkpoints for different use scenarios. All models here are bas
 | Generation | Depth map      | [HF Hub](https://huggingface.co/gligen/gligen-generation-depth/blob/main/diffusion_pytorch_model.bin)      |
 | Generation | Semantic map   | [HF Hub](https://huggingface.co/gligen/gligen-generation-sem/blob/main/diffusion_pytorch_model.bin)      |
 | Generation | Normal map     | [HF Hub](https://huggingface.co/gligen/gligen-generation-normal/blob/main/diffusion_pytorch_model.bin)      |
+
+Note that the provided checkpoint for semantic map is only trained on ADE20K dataset; the checkpoint for normal map is only trained on DIODE dataset.
 
 ## Inference: Generate images with GLIGEN
 
