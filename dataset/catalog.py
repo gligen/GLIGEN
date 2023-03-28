@@ -26,24 +26,6 @@ class DatasetCatalog:
         }
 
 
-        self.FlickrGroundingHed = {
-            "target": "dataset.dataset_hed.HedDataset",
-            "train_params":dict(
-                tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv/train-00.tsv'),
-                hed_tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv_hed/train-00.tsv'),
-            ),
-        }
-
-
-        self.FlickrGroundingCanny = {
-            "target": "dataset.dataset_canny.CannyDataset",
-            "train_params":dict(
-                tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv/train-00.tsv'),
-                canny_tsv_path=os.path.join(ROOT,'GROUNDING/flickr30k/tsv_canny/train-00.tsv'),
-            ),
-        }
-
-
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # 
 
         self.SBUGrounding = {   
