@@ -20,9 +20,9 @@ This is the primary modality we study in this paper. We use the following datase
 
 
 
-- 1) [Flickr](#): The original dataset provides caption annotations for images and key nouns in captions are associated with bounding boxes.  
-- 2) [VG](#): Grounding annotations are curated by [MDETR](https://github.com/ashkamath/mdetr/blob/main/.github/pretrain.md) from VQA and other annotations from original dataset.  
-- 3) [SBU](#): Image text pairs dataset. We obtain bounding boxes using [GLIP](https://github.com/microsoft/GLIP) 
+- 1) [Flickr](https://huggingface.co/datasets/gligen/flickr_tsv/tree/main): The original dataset provides caption annotations for images and key nouns in captions are associated with bounding boxes.  
+- 2) [VG](https://huggingface.co/datasets/gligen/gqa_tsv/tree/main): Grounding annotations are curated by [MDETR](https://github.com/ashkamath/mdetr/blob/main/.github/pretrain.md) from VQA and other annotations from original dataset.  
+- 3) [SBU](https://huggingface.co/datasets/gligen/sbu_tsv/tree/main): Image text pairs dataset. We obtain bounding boxes using [GLIP](https://github.com/microsoft/GLIP) 
 - 4) [O365](#): Detection dataset, thus no caption provided. We create pseudo-caption during training by using class names. 
 - 5) [CC3M](#): Image text pairs dataset. We obtain bounding boxes using [GLIP](https://github.com/microsoft/GLIP)  
 
@@ -44,7 +44,7 @@ We have prepared all these data with the same format. `dataset/tsv_dataset.py` i
 
 ### Keypoints grounding 
 
-We use COCO2017 split as training data; one can download it from COCO official website or [here](#). It should contain the following folder/files: 
+We use COCO2017 split as training data; one can download it from COCO official website or [here](https://huggingface.co/datasets/gligen/coco_keypoint/tree/main). It should contain the following folder/files: 
 * images/: a folder contain all COCO images 
 * annotations2017/captions_train2017.json
 * annotations2017/person_keypoints_train2017.json
