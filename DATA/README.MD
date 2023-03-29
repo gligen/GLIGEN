@@ -53,7 +53,7 @@ We use COCO2017 split as training data; one can download it from COCO official w
 
 
 ### HED edge map grounding 
-We use [this](https://github.com/sniklaus/pytorch-hed) github repo to detect HED edge maps for all images in CC3M dataset. We create the edge maps into TSV format [here] (#) (Please use `tsv_split_merge.py` to merge downloaded tsv files).  `dataset/dataset_hed.py` is the main script used to process this data. 
+We use [this](https://github.com/sniklaus/pytorch-hed) github repo to detect HED edge maps for all images in CC3M dataset. We create the edge maps into TSV format [here](#) (Please use `tsv_split_merge.py` to merge downloaded tsv files).  `dataset/dataset_hed.py` is the main script used to process this data. 
 
 ### Canny edge map grounding 
 We use `cv.Canny(img,100,200)` to get canny edge map for all images in CC3M dataset; and they are stored into a TSV format [here](#) (Please use `tsv_split_merge.py` to merge downloaded tsv files). `dataset/dataset_canny.py` is the main script used to process this data. 
