@@ -47,7 +47,7 @@ We have prepared all these data with the same format. `dataset/tsv_dataset.py` i
 We use COCO2017 split as training data; one can download it from COCO official website or [here](#). It should contain the following folder/files: 
 * images/: a folder contain all COCO images 
 * annotations2017/captions_train2017.json
-* person_keypoints_train2017.json
+* annotations2017/person_keypoints_train2017.json
 
 `dataset/dataset_kp.py` is the main script used to process this data 
 
