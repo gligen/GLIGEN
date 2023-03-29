@@ -16,7 +16,7 @@ Before downloading data, one may have the question where should I put the data o
 
 ### Bounding boxes grounding 
 
-This is the primary modality we study in this paper. We use the following datasets and they are all provided in the TSV format. These data are used for all box related models training, such as box text/image grounded generation/inpainting. 
+This is the primary modality we study in this paper. We use the following datasets and they are all provided in the TSV format (Please use `tsv_split_merge.py` to merge downloaded tsv files). These data are used for all box related models training, such as box text/image grounded generation/inpainting. 
 
 
 
@@ -53,17 +53,17 @@ We use COCO2017 split as training data; one can download it from COCO official w
 
 
 ### HED edge map grounding 
-We use [this](https://github.com/sniklaus/pytorch-hed) github repo to detect HED edge maps for all images in CC3M dataset. We create the edge maps into TSV format [here](#).  `dataset/dataset_hed.py` is the main script used to process this data. 
+We use [this](https://github.com/sniklaus/pytorch-hed) github repo to detect HED edge maps for all images in CC3M dataset. We create the edge maps into TSV format [here] (#) (Please use `tsv_split_merge.py` to merge downloaded tsv files).  `dataset/dataset_hed.py` is the main script used to process this data. 
 
 ### Canny edge map grounding 
-We use `cv.Canny(img,100,200)` to get canny edge map for all images in CC3M dataset; and they are stored into a TSV format [here](#). `dataset/dataset_canny.py` is the main script used to process this data. 
+We use `cv.Canny(img,100,200)` to get canny edge map for all images in CC3M dataset; and they are stored into a TSV format [here](#) (Please use `tsv_split_merge.py` to merge downloaded tsv files). `dataset/dataset_canny.py` is the main script used to process this data. 
 
 
 ### Semantic map grounding 
 We use [ade20k](https://groups.csail.mit.edu/vision/datasets/ADE20K/) dataset which contains 150 semantic classes. We use the [BLIP](https://github.com/salesforce/BLIP) to get a pseudo caption for each image. `dataset/dataset_sem.py` is the main script used to process this data. 
 
 ### Depth map grounding 
-We use the [MiDas](https://github.com/isl-org/MiDaS) to get depth map for all images in CC3M dataset; and they are stored into a TSV format [here](#). `dataset/dataset_depth.py` is the main script used to process this data. 
+We use the [MiDas](https://github.com/isl-org/MiDaS) to get depth map for all images in CC3M dataset; and they are stored into a TSV format [here](#) (Please use `tsv_split_merge.py` to merge downloaded tsv files). `dataset/dataset_depth.py` is the main script used to process this data. 
 
 ### Normal map grounding 
 We use [DIODE](https://diode-dataset.org/) dataset and [BLIP](https://github.com/salesforce/BLIP) is used to get pseudo captions. Note this dataset has very few training scenes, thus we don't know how well our provided model tested on the other scenes. 
