@@ -60,13 +60,13 @@ We use `cv.Canny(img,100,200)` to get canny edge map for all images in CC3M data
 
 
 ### Semantic map grounding 
-We use ade20k dataset which contains 150 semantic classes. We use the [BLIP](https://github.com/salesforce/BLIP) to get a pseudo caption for each image. One can download our pseudo annotations [here](#). `dataset/dataset_sem.py` is the main script used to process this data. 
+We use [ade20k](https://groups.csail.mit.edu/vision/datasets/ADE20K/) dataset which contains 150 semantic classes. We use the [BLIP](https://github.com/salesforce/BLIP) to get a pseudo caption for each image. `dataset/dataset_sem.py` is the main script used to process this data. 
 
 ### Depth map grounding 
 We use the [MiDas](https://github.com/isl-org/MiDaS) to get depth map for all images in CC3M dataset; and they are stored into a TSV format [here](#). `dataset/dataset_depth.py` is the main script used to process this data. 
 
 ### Normal map grounding 
-We use DIODE dataset and [BLIP](https://github.com/salesforce/BLIP) is used to get pseudo captions. One can download captions [here](#). Note this dataset has very few training scenes, thus we don't know how well our provided model tested on the other scenes. 
+We use [DIODE](https://diode-dataset.org/) dataset and [BLIP](https://github.com/salesforce/BLIP) is used to get pseudo captions. Note this dataset has very few training scenes, thus we don't know how well our provided model tested on the other scenes. 
 
 ### Custom modality grounding
 One can prepare their own data and write Dataset accordingly with any format restriction. Please refer to the next section on how to use the custom data. 
