@@ -9,7 +9,7 @@ Before downloading data, one may have the question where should I put the data o
        SBUGrounding = {   
            "target": "dataset.tsv_dataset.TSVDataset",
            "train_params":dict(
-               tsv_path=path_to_preprocess_tsv, # Check below section, we provide the tsv to download.  
+               tsv_path=path_to_preprocess_tsv, # Check the following section where we provide the tsv to download.  
            ),
         }
 ```
