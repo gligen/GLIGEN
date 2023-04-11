@@ -99,6 +99,10 @@ Typecially, we first train GLIGEN on generation task (e.g., text grounded genera
 
 The original GLIGEN was partly implemented and trained during an internship at Microsoft. This repo re-implements GLIGEN in PyTorch with university GPUs after the internship. Despite the minor implementation differences, this repo aims to reproduce the results and observations in the paper for research purposes.
 
+## Terms and Conditions
+
+We have strict terms and conditions for using the model checkpoints and the demo; it is restricted to uses that follow the license agreement of <a href="https://github.com/CompVis/latent-diffusion">Latent Diffusion Model</a> and <a href="https://github.com/Stability-AI/StableDiffusion">Stable Diffusion</a>.
+
 
 ## Broader Impact
 
