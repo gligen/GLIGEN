@@ -13,6 +13,9 @@
 
 
 ## :fire: News
+[data](DATA/README.MD)
+
+* **[2023.04.18]** We have updated our arxiv. We explain the difference between GLIGEN and ControlNet at [here](docs/gligen_vs_controlnet.MD) to help researchers to have a better and deeper understanding. 
 
 * **[2023.04.08]** GLIGEN is combined with [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO), which free humans from anotating bounding boxes and their concepts. Given a language prompt, Grounding DINO localizes the concepts with boxes:  image $\rightarrow$ (box, concept), then GLIGEN inpaint the image:  (box, concept) $\rightarrow$ image:
 
