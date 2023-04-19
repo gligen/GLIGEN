@@ -13,7 +13,7 @@
 
 
 ## :fire: News
-[data](DATA/README.MD)
+
 
 * **[2023.04.18]** We have updated our arxiv. We explain the difference between GLIGEN and ControlNet at [here](docs/gligen_vs_controlnet.MD) to help researchers to have a better and deeper understanding. 
 
