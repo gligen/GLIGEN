@@ -340,7 +340,7 @@ def prepare_batch_sem(meta, batch=1):
 
 
 @torch.no_grad()
-def run(meta, config, starting_noise=None):
+def run(meta, args, starting_noise=None):
 
     # - - - - - prepare models - - - - - # 
     model, autoencoder, text_encoder, diffusion, config = load_ckpt(meta["ckpt"])
