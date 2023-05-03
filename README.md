@@ -100,7 +100,7 @@ Typecially, we first train GLIGEN on generation task (e.g., text grounded genera
 
 ## Disclaimer
 
-The original GLIGEN was partly implemented and trained during an internship at Microsoft. This repo re-implements GLIGEN in PyTorch with university GPUs after the internship. Despite the minor implementation differences, this repo aims to reproduce the results and observations in the paper for research purposes.
+The original GLIGEN was partly implemented during a part-time internship at Microsoft while the first author was working at The University of Wisconsin-Madison. This repo re-implements GLIGEN in PyTorch with university GPUs. Despite the minor implementation differences, this repo aims to reproduce the results and observations in the paper for research purposes.
 
 ## Terms and Conditions
 
