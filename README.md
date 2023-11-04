@@ -15,6 +15,13 @@
 ## :fire: News
 
 
+* **[2023.11.2]**  GLIGEN is integreated into [LLaVA-Interactive](https://llava-vl.github.io/llava-interactive/): an all-in-one demo for Image Chat, Segmentation, Generation and Editing. Experience the future of interactive image editing with visual chat.
+[[Project Page](https://llava-vl.github.io/llava-interactive/)] [[Demo](https://6dd3-20-163-117-69.ngrok-free.app/)] [[Code](https://github.com/LLaVA-VL/LLaVA-Interactive-Demo)] [[Paper](https://arxiv.org/abs/2311.00571)]
+<center>
+<img src="https://github.com/LLaVA-VL/llava-interactive/blob/main/images/llava_interactive_workflow.png" width="30%"> 
+</center>
+
+
 * **[2023.04.18]** We have updated our arxiv paper. We explain the difference between GLIGEN and ControlNet [here](docs/gligen_vs_controlnet.MD) to help researchers to have a better and deeper understanding. 
 
 * **[2023.04.08]** GLIGEN is combined with [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO), which free humans from anotating bounding boxes and their concepts. Given a language prompt, Grounding DINO localizes the concepts with boxes:  image $\rightarrow$ (box, concept), then GLIGEN inpaint the image:  (box, concept) $\rightarrow$ image:
@@ -22,13 +29,7 @@
 <center>
 <img src="https://camo.githubusercontent.com/4dabf8128cd4f40eaa97ee45d050ddcd8063356f631d98072fb5a5c19c35fa9c/68747470733a2f2f68756767696e67666163652e636f2f5368696c6f6e674c69752f47726f756e64696e6744494e4f2f7265736f6c76652f6d61696e2f47445f474c4947454e2e706e67" width="600"> 
 </center>
-* **[2023.11.2]**  GLIGEN is integreated into [LLaVA-Interactive](https://llava-vl.github.io/llava-interactive/): an all-in-one demo for Image Chat, Segmentation, Generation and Editing. Experience the future of interactive image editing with visual chat.
-[[Project Page](https://llava-vl.github.io/llava-interactive/)] [[Demo](https://6dd3-20-163-117-69.ngrok-free.app/)] [[Code](https://github.com/LLaVA-VL/LLaVA-Interactive-Demo)] [[Paper](https://arxiv.org/abs/2311.00571)]
 
-<p align="center">
-    <img src="https://github.com/LLaVA-VL/llava-interactive/blob/main/images/llava_interactive_workflow.png" width="30%"> 
-    <br>
-</p>
 
 * **[2023.03.22]** [Our fork on diffusers](https://github.com/gligen/diffusers/tree/gligen/examples/gligen) with support of text-box-conditioned generation and inpainting is released.  It is now faster, more flexible, and automatically downloads and loads model from Huggingface Hub!  Try it out!
 * **[2023.03.20]** Stay up-to-date on the line of research on *grounded image generation* such as GLIGEN, by checking out [`Computer Vision in the Wild (CVinW) Reading List`](https://github.com/Computer-Vision-in-the-Wild/CVinW_Readings#orange_book-grounded-image-generation-in-the-wild).
