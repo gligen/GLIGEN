@@ -7,7 +7,7 @@ import os
 from transformers import CLIPProcessor, CLIPModel
 from copy import deepcopy
 import torch 
-from ldm.util import instantiate_from_config
+from ldm.util import instantiate_from_config, default_device
 from trainer import read_official_ckpt, batch_to_device
 from inpaint_mask_func import draw_masks_from_boxes
 import numpy as np
@@ -18,7 +18,13 @@ import torchvision.transforms.functional as F
 import torchvision.transforms.functional as TF
 import torchvision.transforms as transforms
 
-device = "cuda"
+device = default_device()
+
+print(f"GLIGEN uses {device.upper()} device.")
+if device == "cpu":
+    print("It will be sloooow. Consider using GPU support with CUDA or (in case of M1/M2 Apple Silicon) MPS.")
+elif device == "mps":
+    print("The fastest you can get on M1/2 Apple Silicon. Yet, still many opimizations are switched off and it will is much slower than CUDA.")
 
 
 def set_alpha_scale(model, alpha_scale):
@@ -69,7 +75,10 @@ def alpha_generator(length, type=None):
 
 def load_ckpt(ckpt_path):
     
-    saved_ckpt = torch.load(ckpt_path)
+    if device in ["cpu", "mps"]:
+        saved_ckpt = torch.load(ckpt_path, map_location=torch.device(device))
+    else:
+        saved_ckpt = torch.load(ckpt_path)
     config = saved_ckpt["config_dict"]["_content"]
 
     model = instantiate_from_config(config['model']).to(device).eval()
@@ -112,7 +121,10 @@ def get_clip_feature(model, processor, input, is_image=False):
         outputs = model(**inputs)
         feature = outputs.image_embeds 
         if which_layer_image == 'after_reproject':
-            feature = project( feature, torch.load('projection_matrix').cuda().T ).squeeze(0)
+            if device in ["cpu", "mps"]:
+                feature = project( feature, torch.load('projection_matrix', map_location=torch.device(device)).cuda().T ).squeeze(0)
+            else:
+                feature = project( feature, torch.load('projection_matrix').cuda().T ).squeeze(0)
             feature = ( feature / feature.norm() )  * 28.7 
             feature = feature.unsqueeze(0)
     else:
