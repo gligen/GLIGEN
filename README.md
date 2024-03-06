@@ -60,7 +60,7 @@ Example samples for each checkpoint will be saved in `generation_samples`. One c
 One need to first prepare data for different grounding modality conditions. Refer [data](DATA/README.MD) for the data we used for different GLIGEN models. Once data is ready, the following command is used to train GLIGEN. (We support multi-GPUs training)
 
 ```bash
-ptyhon main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config
+python main.py --name=your_experiment_name  --yaml_file=path_to_your_yaml_config
 ```
 The `--yaml_file` is the most important argument and below we will use one example to explain key components so that one can be familiar with our code and know how to customize training on their own grounding modalities. The other args are self-explanatory by their names. The experiment will be saved in `OUTPUT_ROOT/name`
 
